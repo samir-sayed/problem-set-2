@@ -21,29 +21,27 @@ from sklearn.linear_model import LogisticRegression as lr
 
 
 # Your code here
-df_arrests = pd.read_csv('data/df_arrests.csv')
+def logistic_regression_function():
+    df_arrests = pd.read_csv('data/df_arrests.csv')
 
-df_arrests_train, df_arrests_test = train_test_split(df_arrests, test_size=0.3, shuffle=True, stratify=df_arrests['y']) #training
+    df_arrests_train, df_arrests_test = train_test_split(df_arrests, test_size=0.3, shuffle=True, stratify=df_arrests['y'])  # training
 
-features = ['current_charge_felony', 'num_fel_arrests_last_year'] #features
+    features = ['current_charge_felony', 'num_fel_arrests_last_year']  # features
 
-param_grid = {'C': [0.01, 0.1, 1, 10, 100]} #parameter grid w/ hyperparameter c
+    param_grid = {'C': [0.01, 0.1, 1, 10, 100]}  # parameter grid w/ hyperparameter c
 
-lr_model = lr()
+    lr_model = lr()
 
-gs_cv = GridSearchCV(lr_model, param_grid, cv=5)
+    gs_cv = GridSearchCV(lr_model, param_grid, cv=5)
 
-gs_cv.fit(df_arrests_train[features], df_arrests_train['y'])
+    gs_cv.fit(df_arrests_train[features], df_arrests_train['y'])
 
-optimal_C = gs_cv.best_params_['C']
-print(f"The optimal value for C: {optimal_C}")
+    optimal_C = gs_cv.best_params_['C']
+    print(f"The optimal value for C: {optimal_C}")
 
-df_arrests_test['pred_lr'] = gs_cv.predict(df_arrests_test[features])
+    df_arrests_test['pred_lr'] = gs_cv.predict(df_arrests_test[features])
 
-df_arrests_train.to_csv('data/df_arrests_train.csv', index=False)
-df_arrests_test.to_csv('data/df_arrests_test.csv', index=False)
-
-
-
+    df_arrests_train.to_csv('data/df_arrests_train.csv', index=False)
+    df_arrests_test.to_csv('data/df_arrests_test.csv', index=False)
 
 
