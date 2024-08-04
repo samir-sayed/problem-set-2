@@ -17,10 +17,52 @@ PART 2: Pre-processing
 '''
 
 # import the necessary packages
-
+import pandas as pd
+import numpy as np
 
 
 # Your code here
+pred_universe_raw = pd.read_csv('data/pred_universe_raw.csv')
+arrest_events_raw = pd.read_csv('data/arrest_events_raw.csv')
+
+pred_universe_raw['arrest_date_univ'] = pd.to_datetime(pred_universe_raw['arrest_date_univ'])
+arrest_events_raw['arrest_date_event'] = pd.to_datetime(arrest_events_raw['arrest_date_event'])
+
+
+df_arrests = pd.merge(pred_universe_raw, arrest_events_raw, on='person_id', how='outer')  #full outer merge on 'person_id' calling it df_arrests
+
+df_arrests['y'] = df_arrests.apply(lambda row: any((arrest_events_raw['person_id'] == row['person_id']) & 
+                                                (arrest_events_raw['arrest_date_event'] > row['arrest_date_univ']) & 
+                                                (arrest_events_raw['arrest_date_event'] <= row['arrest_date_univ'] + pd.Timedelta(days=365)) & 
+                                                (arrest_events_raw['charge_degree'] == 'felony')), axis=1).astype(int)  #create 'y' if felony 365 days after arrest
+
+
+rearrested = df_arrests['y'].mean()
+print(f"What share of arrestees in the df_arrests table were rearrested for a felony crime in the next year? {rearrested:.2%}") #Make it readable in percentage
+
+
+df_arrests['current_charge_felony'] = (df_arrests['charge_degree'] == 'felony').astype(int) #1 if current arrest is felony, 0 otherwise
+
+current_felony = df_arrests['current_charge_felony'].mean()
+print(f"What share of current charges are felonies? {current_felony:.2%}") #show current felony in percentage
+
+
+df_arrests['num_fel_arrests_last_year'] = df_arrests.apply(lambda row: 
+    ((arrest_events_raw['person_id'] == row['person_id']) &
+     (arrest_events_raw['arrest_date_event'] < row['arrest_date_univ']) &
+     (arrest_events_raw['arrest_date_event'] >= row['arrest_date_univ'] - pd.Timedelta(days=365)) &
+     (arrest_events_raw['charge_degree'] == 'felony')).sum(), axis=1)
+
+
+average_felony_arrests_last_year = df_arrests['num_fel_arrests_last_year'].mean()
+print(f"What is the average number of felony arrests in the last year? {average_felony_arrests_last_year:.2f}")
+
+print(f"Mean of 'num_fel_arrests_last_year': {df_arrests['num_fel_arrests_last_year'].mean():.2f}")
+
+print(pred_universe_raw.head())
+df_arrests.to_csv('data/df_arrests.csv', index=False)
+
+
 
 
 
